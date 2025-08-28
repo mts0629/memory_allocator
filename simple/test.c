@@ -3,6 +3,8 @@
 #include "my_allocator.h"
 
 int main(void) {
+    init_allocator();
+
     // Allocate a memory
     int *arr1 = my_malloc(sizeof(int) * 10);
     printf("arr1 (%p): ", (void *)arr1);

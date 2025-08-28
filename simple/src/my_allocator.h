@@ -3,6 +3,9 @@
 // Total size of memory block
 #define TOTAL_SIZE 200
 
+// Initialize the allocator
+void init_allocator(void);
+
 // Allocate a specified size memory
 void *my_malloc(const size_t size);
 

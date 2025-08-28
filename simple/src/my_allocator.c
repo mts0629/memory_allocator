@@ -6,39 +6,46 @@
 
 static uint8_t raw_memory[TOTAL_SIZE];
 
-const uintptr_t last_addr =
-    (uintptr_t)raw_memory + sizeof(uint8_t) * TOTAL_SIZE - 1;
+static const uint8_t *end_addr = raw_memory + sizeof(uint8_t) * TOTAL_SIZE;
 
-typedef struct {
-    uintptr_t addr;
+typedef struct MemInfo {
     size_t size;
+    uint8_t *ptr;
+    struct MemInfo *next;
 } MemInfo;
 
-static MemInfo meminfo[TOTAL_SIZE];
+MemInfo *head = (MemInfo*)raw_memory;
+
+void init_allocator(void) {
+    head->size = 0;
+    head->ptr = raw_memory + sizeof(MemInfo);
+    head->next = NULL;
+}
 
 void *my_malloc(const size_t size) {
-    if (size > TOTAL_SIZE) {
-        return NULL;
-    }
+    MemInfo *info = head;
 
-    uintptr_t free_addr = (uintptr_t)raw_memory;
-    int i = 0;
-    int last_idx = 0;
-    for (i = 0; i < TOTAL_SIZE; i++) {
-        if (meminfo[i].size > 0) {
-            free_addr = meminfo[i].addr + meminfo[i].size;
-            last_idx = i;
+    while ((uint8_t*)info < (end_addr - sizeof(MemInfo))) {
+        if ((info->next == NULL) || (info->size == 0)) {
+            if ((head->ptr + size) < end_addr) {
+                info->size = size;
+                head->next = (MemInfo*)(info->ptr + size);
+
+                MemInfo *next = head->next;
+                next->size = 0;
+                next->ptr = (uint8_t*)next + sizeof(MemInfo);
+                next->next = NULL;
+
+                return (void*)info->ptr;
+            }
+
+            return NULL;
         }
+
+        info = info->next;
     }
 
-    if ((free_addr + size) > last_addr) {
-        return NULL;
-    }
-
-    meminfo[last_idx].addr = free_addr;
-    meminfo[last_idx].size = size;
-
-    return (void *)meminfo[last_idx].addr;
+    return NULL;
 }
 
 void my_free(void *ptr) {
@@ -46,10 +53,13 @@ void my_free(void *ptr) {
         return;
     }
 
-    for (int i = 0; i < TOTAL_SIZE; i++) {
-        if ((void *)meminfo[i].addr == ptr) {
-            meminfo[i].addr = 0x0;
-            meminfo[i].size = 0;
+    MemInfo *info = head;
+    while ((uint8_t*)info < end_addr) {
+        if ((void*)info->ptr == ptr) {
+            info->size = 0;
+            return;
         }
+
+        info = info->next;
     }
 }
