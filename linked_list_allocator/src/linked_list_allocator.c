@@ -4,42 +4,47 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static uint8_t heap[HEAP_SIZE];
+#include <stdio.h>
 
-static const uint8_t *heap_end = heap + sizeof(uint8_t) * HEAP_SIZE;
+static uint8_t heap[HEAP_SIZE];
 
 typedef struct MemInfo {
     size_t size;
-    uint8_t *ptr;
     struct MemInfo *next;
 } MemInfo;
 
-MemInfo *head = (MemInfo*)heap;
+static MemInfo *free_head = (MemInfo*)heap;
 
 void init_allocator(void) {
-    head->size = 0;
-    head->ptr = heap + sizeof(MemInfo);
-    head->next = NULL;
+    free_head->size = sizeof(heap) - sizeof(MemInfo);
+    free_head->next = (MemInfo*)(heap + sizeof(MemInfo));
 }
 
 void *mem_alloc(const size_t size) {
-    MemInfo *info = head;
+    MemInfo *info = free_head;
 
-    while ((uint8_t*)info < (heap_end - sizeof(MemInfo))) {
-        if ((info->next == NULL) || (info->size == 0)) {
-            if ((head->ptr + size) < heap_end) {
-                info->size = size;
-                head->next = (MemInfo*)(info->ptr + size);
-
-                MemInfo *next = head->next;
-                next->size = 0;
-                next->ptr = (uint8_t*)next + sizeof(MemInfo);
-                next->next = NULL;
-
-                return (void*)info->ptr;
+    while (true) {
+        if (size <= info->size) {
+            if ((info->size - size) < sizeof(MemInfo)) {
+                return NULL;
             }
 
-            return NULL;
+            void *ptr = (void*)info->next;
+
+            size_t current_size = info->size;
+
+            info->size = size;
+            info->next = NULL;
+
+            free_head = (MemInfo*)(info + size);
+            free_head->size = current_size - size - sizeof(MemInfo);
+            free_head->next = free_head + sizeof(MemInfo);
+
+            return ptr;
+        }
+
+        if (info->next == info) {
+            break;
         }
 
         info = info->next;
@@ -53,13 +58,9 @@ void mem_free(void *ptr) {
         return;
     }
 
-    MemInfo *info = head;
-    while ((uint8_t*)info < heap_end) {
-        if ((void*)info->ptr == ptr) {
-            info->size = 0;
-            return;
-        }
+    MemInfo *info = (MemInfo*)((uint8_t*)ptr - sizeof(MemInfo));
 
-        info = info->next;
-    }
+    MemInfo *current_head = free_head;
+    free_head = info;
+    free_head->next = current_head;
 }
