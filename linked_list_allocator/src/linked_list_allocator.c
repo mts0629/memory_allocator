@@ -7,45 +7,52 @@
 // Heap area
 static uint8_t heap[HEAP_SIZE];
 
-// Memory header
-typedef struct MemInfo {
+// Free node
+typedef struct Node {
     size_t size;
-    struct MemInfo *next;
-} MemInfo;
+    struct Node *next;
+} Node;
 
 // Head of the free list
-static MemInfo *free_head = (MemInfo *)heap;
+static Node *head = (Node *)heap;
 
 void init_allocator(void) {
-    free_head->size = sizeof(heap);
-    free_head->next = NULL;
+    static bool initialized = false;
+
+    if (!initialized) {
+        head->size = sizeof(heap);
+        head->next = NULL;
+
+        // Initialize the allocator only once
+        initialized = true;
+    }
 }
 
 void *mem_alloc(const size_t size) {
-    MemInfo *info = free_head;
+    Node *node = head;
 
-    while (info != NULL) {
-        if (size <= info->size) {
-            // Check the remaining are can store a memory header
-            if ((info->size - size) < sizeof(MemInfo)) {
+    while (node != NULL) {
+        if (size <= node->size) {
+            // Check the remaining area can store a memory node
+            if ((node->size - size) < sizeof(Node)) {
                 return NULL;
             }
 
-            uint8_t *ptr = (uint8_t *)info;
+            uint8_t *ptr = (uint8_t *)node;
 
             // Attach the remaining area to the head of the free list
-            MemInfo *prev_next = free_head->next;
-            free_head = (MemInfo *)(ptr + sizeof(MemInfo) + size);
-            free_head->size = info->size - sizeof(MemInfo) - size;
-            free_head->next = prev_next;
+            Node *prev_next = head->next;
+            head = (Node *)(ptr + sizeof(Node) + size);
+            head->size = node->size - sizeof(Node) - size;
+            head->next = prev_next;
 
-            info->size = size;
-            info->next = NULL;
+            node->size = size;
+            node->next = NULL;
 
-            return (void *)(ptr + sizeof(MemInfo));
+            return (void *)(ptr + sizeof(Node));
         }
 
-        info = info->next;
+        node = node->next;
     }
 
     return NULL;
@@ -57,9 +64,9 @@ void mem_free(void *ptr) {
     }
 
     // Attach a deallocated memory into the head of the free list
-    MemInfo *current_head = free_head;
+    Node *current_head = head;
 
-    MemInfo *info = (MemInfo *)((uint8_t *)ptr - sizeof(MemInfo));
-    free_head = info;
-    free_head->next = current_head;
+    Node *node = (Node *)((uint8_t *)ptr - sizeof(Node));
+    head = node;
+    head->next = current_head;
 }
