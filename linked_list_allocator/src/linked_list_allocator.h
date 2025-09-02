@@ -11,3 +11,6 @@ void *mem_alloc(const size_t size);
 
 // Free allocated memory
 void mem_free(void *ptr);
+
+// Debug print for the free list
+void debug_print(void);

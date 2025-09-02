@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <stdio.h>
+
 // Heap area
 static uint8_t heap[HEAP_SIZE];
 
@@ -70,3 +72,18 @@ void mem_free(void *ptr) {
     head = node;
     head->next = current_head;
 }
+
+#ifdef NDEBUG
+void debug_print(void) {}
+#else
+void debug_print(void) {
+    Node *node = head;
+    int i = 0;
+    while (node != NULL) {
+        printf("[%d] size=%lu ", i, node->size);
+        node = node->next;
+        i++;
+    }
+    putchar('\n');
+}
+#endif
