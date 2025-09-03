@@ -60,16 +60,35 @@ void *mem_alloc(const size_t size) {
     return NULL;
 }
 
+static inline Node *node_address(const void *ptr) {
+    return (Node *)((uint8_t *)ptr - sizeof(Node));
+}
+
+static inline Node *next_node_address(const Node *node) {
+    return (Node *)((uint8_t *)node + sizeof(Node) + node->size);
+}
+
 void mem_free(void *ptr) {
     if (ptr == NULL) {
         return;
     }
 
+    Node *free_node = node_address(ptr);
+
+    Node *node = head;
+    while (node != NULL) {
+        // If deallocated node is next to the existing one, combine them
+        if (next_node_address(node) == free_node) {
+            node->size += (sizeof(Node) + free_node->size);
+            return;
+        }
+
+        node = node->next;
+    }
+
     // Attach a deallocated memory into the head of the free list
     Node *current_head = head;
-
-    Node *node = (Node *)((uint8_t *)ptr - sizeof(Node));
-    head = node;
+    head = free_node;
     head->next = current_head;
 }
 

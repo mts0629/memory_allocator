@@ -52,7 +52,12 @@ int main(void) {
     debug_print();
 
     mem_free(arr2);
+
+    debug_print();
+
     mem_free(arr3);
+
+    debug_print();
 
     return 0;
 }
