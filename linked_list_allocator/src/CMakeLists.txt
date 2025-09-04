@@ -11,4 +11,8 @@ target_compile_options(${TARGET_LIB_NAME}
 	PUBLIC -Wall -Wextra -Wpedantic -Werror
 )
 
+if(DEFINED HEAP_SIZE) 
+	target_compile_definitions(${TARGET_LIB_NAME} PRIVATE HEAP_SIZE=${HEAP_SIZE})
+endif()
+
 target_include_directories(${TARGET_LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
