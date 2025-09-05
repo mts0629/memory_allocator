@@ -19,6 +19,9 @@ typedef struct Node {
 // Head of the free list
 static Node *head = (Node *)heap;
 
+#ifdef __GNUC__
+__attribute__((constructor))
+#endif
 void init_allocator(void) {
     static bool initialized = false;
 

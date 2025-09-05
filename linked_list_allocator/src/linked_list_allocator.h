@@ -8,8 +8,10 @@
 #define HEAP_SIZE 1024
 #endif
 
+#ifndef __GNUC__
 // Initialize the allocator
 void init_allocator(void);
+#endif
 
 // Allocate a specified size memory
 void *mem_alloc(const size_t size);

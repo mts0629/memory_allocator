@@ -3,7 +3,9 @@
 #include "linked_list_allocator.h"
 
 int main(void) {
+#ifndef __GNUC__
     init_allocator();
+#endif
 
     debug_print();
 

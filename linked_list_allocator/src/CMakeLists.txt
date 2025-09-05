@@ -8,7 +8,7 @@ set (CMAKE_C_STANDARD_REQUIRED True)
 add_library(${TARGET_LIB_NAME} SHARED ${SOURCES})
 
 target_compile_options(${TARGET_LIB_NAME}
-	PUBLIC -Wall -Wextra -Wpedantic -Werror
+	PUBLIC -Wall -Wextra -Werror
 )
 
 if(DEFINED HEAP_SIZE) 
