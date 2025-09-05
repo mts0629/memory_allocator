@@ -3,8 +3,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
+#ifndef NDEBUG
 #include <stdio.h>
+#endif
 
 // Heap area
 static uint8_t heap[HEAP_SIZE];
@@ -30,6 +31,10 @@ void init_allocator(void) {
     }
 }
 
+static inline uint8_t *mem_start_address(const Node *node) {
+    return (uint8_t *)node + sizeof(Node);
+}
+
 void *mem_alloc(const size_t size) {
     Node *node = head;
 
@@ -40,18 +45,16 @@ void *mem_alloc(const size_t size) {
                 return NULL;
             }
 
-            uint8_t *ptr = (uint8_t *)node;
-
             // Attach the remaining area to the head of the free list
-            Node *prev_next = head->next;
-            head = (Node *)(ptr + sizeof(Node) + size);
-            head->size = node->size - sizeof(Node) - size;
-            head->next = prev_next;
+            Node *cur_next = head->next;
+            head = (Node *)(mem_start_address(node) + size);
+            head->size = node->size - (sizeof(Node) + size);
+            head->next = cur_next;
 
             node->size = size;
             node->next = NULL;
 
-            return (void *)(ptr + sizeof(Node));
+            return (void *)mem_start_address(node);
         }
 
         node = node->next;
@@ -65,7 +68,7 @@ static inline Node *node_address(const void *ptr) {
 }
 
 static inline Node *next_node_address(const Node *node) {
-    return (Node *)((uint8_t *)node + sizeof(Node) + node->size);
+    return (Node *)(mem_start_address(node) + node->size);
 }
 
 void mem_free(void *ptr) {

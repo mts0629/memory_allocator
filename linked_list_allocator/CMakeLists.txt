@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(simple)
+project(linked_list_allocator)
 
 set(TARGET_LIB_NAME linked_list_allocator)
 
