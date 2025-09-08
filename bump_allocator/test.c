@@ -3,9 +3,6 @@
 #include "bump_allocator.h"
 
 int main(void) {
-#ifdef __GNUC__
-    init_allocator();
-#endif
     debug_print();
 
     // Allocate a memory
