@@ -10,6 +10,9 @@
 // Heap area
 static uint8_t heap[HEAP_SIZE];
 
+// End address of the heap
+static uint8_t *end_addr = heap + HEAP_SIZE - 1;
+
 // Current pointer
 static uint8_t *cur_ptr = heap;
 
@@ -17,7 +20,11 @@ static uint8_t *cur_ptr = heap;
 static size_t mem_count = 0;
 
 void *mem_alloc(const size_t size) {
-    if (size >= HEAP_SIZE) {
+    if (size > HEAP_SIZE) {
+        return NULL;
+    }
+
+    if ((cur_ptr + size) > (end_addr + 1)) {
         return NULL;
     }
 
@@ -30,6 +37,10 @@ void *mem_alloc(const size_t size) {
 
 void mem_free(void *ptr) {
     if (ptr == NULL) {
+        return;
+    }
+
+    if (((uint8_t*)ptr < heap) || ((uint8_t*)ptr > end_addr)) {
         return;
     }
 
