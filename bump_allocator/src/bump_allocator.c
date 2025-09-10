@@ -57,6 +57,6 @@ void mem_free(void *ptr) {
 void debug_print(void) {}
 #else
 void debug_print(void) {
-    printf("cur_ptr=%p, mem_count==%lu\n", cur_ptr, mem_count);
+    printf("cur_ptr=%p, mem_count=%lu\n", cur_ptr, mem_count);
 }
 #endif
