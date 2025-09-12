@@ -12,4 +12,5 @@ Try to implement memory allocators
 ## Implementation
 
 - `bump_allocator/` ... Bump allocator
+- `buddy_allocator/` ... Buddy memory allocator
 - `linked_list_allocator/` ... Linked list allocator
