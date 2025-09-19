@@ -16,3 +16,5 @@ if(DEFINED HEAP_SIZE)
 endif()
 
 target_include_directories(${TARGET_LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(${TARGET_LIB_NAME} m)

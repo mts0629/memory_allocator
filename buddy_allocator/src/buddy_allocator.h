@@ -5,11 +5,11 @@
 
 #ifndef BLOCK_SIZE
 // Block size in bytes
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 32
 #endif
 #ifndef ORDER
 // Order
-#define ORDER 1
+#define ORDER 4
 #endif
 
 #ifndef __GNUC__
