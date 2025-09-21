@@ -13,11 +13,13 @@ static uint8_t heap[BLOCK_SIZE * (ORDER + 1)];
 
 // State of memory block
 typedef enum State {
+    UNUSED,
     FREE,
     ALLOCATED,
     SPLITTED
 } State;
 
+// Node of memory block
 typedef struct Node {
     int order;
     uint8_t *addr;
@@ -27,7 +29,6 @@ typedef struct Node {
     struct Node *right;
 } Node;
 
-static int node_index = 0;
 Node nodes[256];
 
 static Node *head = nodes;
@@ -49,8 +50,13 @@ void init_allocator(void) {
     static bool initialized = false;
 
     if (!initialized) {
+        // Clear nodes
+        for (int i = 0; i < 256; i++) {
+            nodes[i].state = UNUSED;
+        }
+
+        // Initialize the root node
         init_node(head, ORDER, heap, sizeof(heap));
-        node_index++;
 
         initialized = true;
     }
@@ -72,8 +78,8 @@ static int get_order(const size_t size) {
     return order;
 }
 
-// Search a free memory block
-static uint8_t *search_free_block(Node *node, const int order) {
+// Get a free memory block
+static uint8_t *get_free_block(Node *node, const int order) {
     if (node->order == order) {
         if (node->state == FREE) {
             node->state = ALLOCATED;
@@ -82,14 +88,14 @@ static uint8_t *search_free_block(Node *node, const int order) {
     }
 
     if (node->left) {
-        uint8_t *addr = search_free_block(node->left, order);
+        uint8_t *addr = get_free_block(node->left, order);
         if (addr) {
             return addr;
         }
     }
 
     if (node->right) {
-        uint8_t *addr = search_free_block(node->right, order);
+        uint8_t *addr = get_free_block(node->right, order);
         if (addr) {
             return addr;
         }
@@ -98,39 +104,69 @@ static uint8_t *search_free_block(Node *node, const int order) {
     return NULL;
 }
 
+static Node *get_unused_node(void) {
+    Node *node = nodes;
+
+    for (int i = 0; i < 256; i++) {
+        if (node->state == UNUSED) {
+            return node;
+        }
+
+        node++;
+    }
+
+    return NULL;
+}
+
+static Node *add_new_node(const int order, uint8_t *addr, const size_t size) {
+    Node *new_node = get_unused_node();
+    if (new_node == NULL) {
+        return NULL;
+    }
+
+    init_node(new_node, order, addr, size);
+
+    return new_node;
+}
+
 // Split the heap
 static bool split_heap(Node *node, const int order, const int cur_order) {
-    if (cur_order == order) {
-        if (node->state == FREE) {
+    if (node->state == ALLOCATED) {
+        return false;
+    }
+
+    if (node->state == SPLITTED) {
+        if (split_heap(node->left, order, (cur_order - 1))) {
+            return true;
+        }
+        if (split_heap(node->right, order, (cur_order - 1))) {
             return true;
         }
     }
 
-    node->state = SPLITTED;
+    if (node->state == FREE) {
+        if (cur_order == order) {
+            return true;
+        }
 
-    int next_order = cur_order - 1;
-    size_t next_size = node->size / 2;
+        node->state = SPLITTED;
 
-    if (node->left == NULL) {
-        Node *new_node = &node[node_index];
-        init_node(new_node, next_order, node->addr, next_size);
-        node->left = new_node;
+        int next_order = cur_order - 1;
+        size_t next_size = node->size / 2;
 
-        node_index++;
-    }
-    if (split_heap(node->left, order, next_order)) {
-        return true;
-    }
+        if (node->left == NULL) {
+            node->left = add_new_node(next_order, node->addr, next_size);
+        }
+        if (node->right == NULL) {
+            node->right = add_new_node(next_order, (node->addr + next_size), next_size);
+        }
 
-    if (node->right == NULL) {
-        Node *new_node = &node[node_index];
-        init_node(new_node, next_order, (node->addr + next_size), next_size);
-        node->right = new_node;
-
-        node_index++;
-    }
-    if (split_heap(node->right, order, next_order)) {
-        return true;
+        if (split_heap(node->left, order, next_order)) {
+            return true;
+        }
+        if (split_heap(node->right, order, next_order)) {
+            return true;
+        }
     }
 
     return false;
@@ -146,10 +182,10 @@ void *mem_alloc(const size_t size) {
         return NULL;
     }
 
-    uint8_t *addr = search_free_block(head, order);
+    uint8_t *addr = get_free_block(head, order);
     if (addr == NULL) {
         if (split_heap(head, order, ORDER)) {
-            addr = search_free_block(head, order);
+            addr = get_free_block(head, order);
         }
     }
 

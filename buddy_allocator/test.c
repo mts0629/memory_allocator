@@ -20,7 +20,6 @@ int main(void) {
 
     debug_print();
 
-    /*
     // Allocate an another memory
     int *arr2 = mem_alloc(sizeof(int) * 10);
     printf("arr2 (%p): ", (void *)arr2);
@@ -32,6 +31,7 @@ int main(void) {
 
     debug_print();
 
+    /*
     // Free the first one
     mem_free(arr1);
 
