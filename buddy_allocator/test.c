@@ -31,7 +31,6 @@ int main(void) {
 
     debug_print();
 
-    /*
     // Free the first one
     mem_free(arr1);
 
@@ -48,6 +47,7 @@ int main(void) {
 
     debug_print();
 
+    /*
     // Fail: try to allocate too much memory
     int *arr4 = mem_alloc(sizeof(int) * 1000);
     printf("arr4 (%p)\n", (void *)arr4);

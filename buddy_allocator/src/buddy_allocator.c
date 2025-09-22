@@ -192,37 +192,49 @@ void *mem_alloc(const size_t size) {
     return (void*)addr;
 }
 
-/*
+static Node *search_block(Node *node, const uint8_t *addr) {
+    if (node->addr == addr) {
+        return node;
+    }
+
+    if (search_block(node->left, addr)) {
+        return node->left;
+    }
+
+    if (search_block(node->right, addr)) {
+        return node->right;
+    }
+
+    return NULL;
+}
+
 void mem_free(void *ptr) {
     if (ptr == NULL) {
         return;
     }
 
-    Node *free_node = node_address(ptr);
-
-    Node *node = head;
-    while (node != NULL) {
-        // If deallocated node is next to the existing one, combine them
-        if (next_node_address(node) == free_node) {
-            node->size += (sizeof(Node) + free_node->size);
-            return;
-        }
-
-        node = node->next;
+    Node *node = search_block(head, (uint8_t *)ptr);
+    if (node == NULL) {
+        return;
     }
 
-    // Attach a deallocated memory into the head of the free list
-    Node *current_head = head;
-    head = free_node;
-    head->next = current_head;
+    if (node->state != ALLOCATED) {
+        return;
+    }
+
+    node->state = FREE;
+
+    // TODO: merge memory blocks
 }
-*/
 
 #ifdef NDEBUG
 void debug_print(void) {}
 #else
 static void debug_print_node(const Node *node) {
-    printf("order=%d, addr=%p, size=%lu\n", node->order, node->addr, node->size);
+    if (node->state == ALLOCATED) {
+        printf("order=%d, addr=%p, size=%lu\n", node->order, node->addr, node->size);
+    }
+
     if (node->left) {
         debug_print_node(node->left);
     }
