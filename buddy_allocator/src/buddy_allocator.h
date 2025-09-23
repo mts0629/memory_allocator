@@ -12,6 +12,9 @@
 #define ORDER 4
 #endif
 
+// Number of nodes (2 * (ORDER + 1) + 1)
+#define NUM_NODES 33
+
 #ifndef __GNUC__
 // Initialize the allocator
 void init_allocator(void);
