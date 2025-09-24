@@ -213,6 +213,29 @@ static Node *search_block(Node *node, const uint8_t *addr) {
     return NULL;
 }
 
+// Merge free blocks
+static void merge_free_blocks(Node *node) {
+    if (node->left && node->right) {
+        if ((node->left->state == FREE) && (node->right->state == FREE)) {
+            node->left->state = UNUSED;
+            node->left = NULL;
+
+            node->right->state = UNUSED;
+            node->right = NULL;
+
+            return;
+        }
+    }
+
+    if (node->left) {
+        merge_free_blocks(node->left);
+    }
+
+    if (node->right) {
+        merge_free_blocks(node->right);
+    }
+}
+
 void mem_free(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -229,7 +252,7 @@ void mem_free(void *ptr) {
 
     node->state = FREE;
 
-    // TODO: merge memory blocks
+    merge_free_blocks(root);
 }
 
 #ifdef NDEBUG
