@@ -32,6 +32,7 @@ int main(void) {
     debug_print();
 
     // Free the first one
+    printf("free arr1\n");
     mem_free(arr1);
 
     debug_print();
@@ -47,21 +48,21 @@ int main(void) {
 
     debug_print();
 
-    /*
     // Fail: try to allocate too much memory
     int *arr4 = mem_alloc(sizeof(int) * 1000);
     printf("arr4 (%p)\n", (void *)arr4);
 
     debug_print();
 
+    printf("free arr2\n");
     mem_free(arr2);
 
     debug_print();
 
+    printf("free arr3\n");
     mem_free(arr3);
 
     debug_print();
-    */
 
     return 0;
 }

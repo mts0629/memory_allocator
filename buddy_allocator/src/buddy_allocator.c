@@ -81,25 +81,26 @@ static int get_order(const size_t size) {
 }
 
 // Get a free memory block
-static uint8_t *get_free_block(Node *node, const int order) {
+static Node *get_free_block(Node *node, const int order) {
     if (node->order == order) {
         if (node->state == FREE) {
-            node->state = ALLOCATED;
-            return node->addr;
+            return node;
         }
+
+        return NULL;
     }
 
     if (node->left) {
-        uint8_t *addr = get_free_block(node->left, order);
-        if (addr) {
-            return addr;
+        Node *n = get_free_block(node->left, order);
+        if (n) {
+            return n;
         }
     }
 
     if (node->right) {
-        uint8_t *addr = get_free_block(node->right, order);
-        if (addr) {
-            return addr;
+        Node *n = get_free_block(node->right, order);
+        if (n) {
+            return n;
         }
     }
 
@@ -186,28 +187,36 @@ void *mem_alloc(const size_t size) {
         return NULL;
     }
 
-    uint8_t *addr = get_free_block(root, order);
-    if (addr == NULL) {
+    Node *node = get_free_block(root, order);
+    if (node == NULL) {
         if (split_heap(root, order, ORDER)) {
-            addr = get_free_block(root, order);
+            node = get_free_block(root, order);
         }
     }
 
-    return (void*)addr;
+    node->state = ALLOCATED;
+
+    return (void*)node->addr;
 }
 
 // Search a memory block from an address
-static Node *search_block(Node *node, const uint8_t *addr) {
-    if (node->addr == addr) {
+static Node *search_block(Node *node, const uint8_t *addr, const State state) {
+    if ((node->addr == addr) && (node->state == state)) {
         return node;
     }
 
-    if (search_block(node->left, addr)) {
-        return node->left;
+    if (node->left) {
+        Node *n = search_block(node->left, addr, state);
+        if (n) {
+            return n;
+        }
     }
 
-    if (search_block(node->right, addr)) {
-        return node->right;
+    if (node->right) {
+        Node *n = search_block(node->right, addr, state);
+        if (n) {
+            return n;
+        }
     }
 
     return NULL;
@@ -241,7 +250,7 @@ void mem_free(void *ptr) {
         return;
     }
 
-    Node *node = search_block(root, (uint8_t *)ptr);
+    Node *node = search_block(root, (uint8_t *)ptr, ALLOCATED);
     if (node == NULL) {
         return;
     }
